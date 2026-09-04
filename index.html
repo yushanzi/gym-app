@@ -50,7 +50,8 @@
       <details class="card detail-card">
         <summary>🥗 饮食要点</summary>
         <ul class="tips">
-          <li>热量缺口 300~400 kcal/天，蛋白质 100~120g/天（两餐各 50~60g）。</li>
+          <li>热量缺口 300~400 kcal/天。</li>
+          <li>每日蛋白质建议：<b id="protein-val">100~120g/天</b>（按最新体重 ×1.6 自动计算）。</li>
           <li>精制主食减量换粗粮；晚饭后不进食。</li>
           <li>拿铁保持无糖；不喝酒、不喝含糖饮料 ✓。</li>
         </ul>
@@ -85,6 +86,27 @@
     <section class="view" id="view-records">
       <header class="page-head"><h1>记录</h1></header>
       <div class="card streak-card" id="streak-card"></div>
+      <div class="card">
+        <h2>个人设置</h2>
+        <div class="setting-row">
+          <span>目标体重（kg）</span>
+          <div class="goal-form">
+            <input type="number" inputmode="decimal" step="0.5" id="goal-input" placeholder="64">
+            <button id="goal-save">保存</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <span>女性提醒</span>
+          <label class="switch">
+            <input type="checkbox" id="female-toggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div id="female-panel" hidden>
+          <p class="phase-line" id="phase-line"></p>
+          <button class="btn-ghost" id="period-btn">今天来了</button>
+        </div>
+      </div>
       <div class="card">
         <h2>打卡日历</h2>
         <div class="cal-nav">

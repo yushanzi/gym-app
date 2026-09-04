@@ -57,6 +57,8 @@ const getCheckins = () => JSON.parse(localStorage.getItem('checkins') || '{}');
 const setCheckins = (c) => localStorage.setItem('checkins', JSON.stringify(c));
 const getWeights = () => JSON.parse(localStorage.getItem('weights') || '[]');
 const setWeights = (w) => localStorage.setItem('weights', JSON.stringify(w));
+const getSettings = () => JSON.parse(localStorage.getItem('settings') || '{}');
+const setSettings = (s) => localStorage.setItem('settings', JSON.stringify(s));
 
 /* ---------- Tab 切换 ---------- */
 document.querySelectorAll('.tab').forEach((t) => {
@@ -71,6 +73,26 @@ document.querySelectorAll('.tab').forEach((t) => {
 /* ---------- 今天 ---------- */
 const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 let selectedDate = null; // null = 今天；否则为选中查看的日期
+
+/* 生理周期推算（默认28天） */
+function cycleDay() {
+  const s = getSettings();
+  if (!s.periodStart) return null;
+  const days = Math.floor((Date.now() - new Date(s.periodStart + 'T00:00:00').getTime()) / 86400000);
+  return ((days % 28) + 28) % 28;
+}
+function phaseTip(d) {
+  if (d <= 5) return '经期中：训练改快走或减半，别硬练';
+  if (d >= 25) return '经期临近：体重可能水肿上涨1~2kg，别慌，过后会回落';
+  return '状态窗口：身体状态好，适合正常训练或加量';
+}
+function phaseBanner() {
+  const s = getSettings();
+  if (!s.female) return '';
+  const d = cycleDay();
+  if (d === null) return '<div class="card phase-banner">🌸 女性提醒已开启：去"记录"页点一次"今天来了"开始记录周期</div>';
+  return `<div class="card phase-banner">🌸 周期第 ${d + 1} 天 · ${phaseTip(d)}</div>`;
+}
 
 function exListHTML(d) {
   return d.exercises
@@ -90,15 +112,16 @@ function renderToday() {
   $('#date-line').textContent = `${viewing.getMonth() + 1}月${viewing.getDate()}日 · ${WEEKDAYS[viewing.getDay()]}${isToday ? '' : ' · 查看中'}`;
   $('#today-title').textContent = isToday ? '今日安排' : WEEKDAYS[viewing.getDay()] + '安排';
   const slot = WEEK[viewing.getDay()];
+  const banner = phaseBanner();
   if (slot.type === 'walk') {
-    $('#today-content').innerHTML = `<div class="card today-card">
+    $('#today-content').innerHTML = banner + `<div class="card today-card">
       <div class="day-badge walk">休息日</div>
       <h2 class="walk-title">快走 20~30 分钟</h2>
       <p class="desc">${WALK_DESC}</p>
     </div>`;
   } else {
     const d = PLAN[slot.type];
-    $('#today-content').innerHTML = `<div class="card today-card">
+    $('#today-content').innerHTML = banner + `<div class="card today-card">
       <div class="card-top"><div class="day-badge">${slot.type}日 · ${d.name}</div><div class="time">${d.time}</div></div>
       <div class="warmup"><b>热身（5分钟）</b><br>${d.warmup}</div>
       <ol class="ex-list">${exListHTML(d)}</ol>
@@ -273,6 +296,7 @@ let calY, calM;
 
 function renderRecords() {
   $('#streak-card').innerHTML = `🔥 连续打卡 <b>${calcStreak()}</b> 天`;
+  renderSettingsPanel();
   renderCalendar();
   renderWeights();
 }
@@ -301,6 +325,7 @@ function renderWeights() {
   if (!ws.length) {
     stats.innerHTML = '<p class="w-empty">还没有记录，保存你的第一个空腹体重吧</p>';
     $('#weight-list').innerHTML = '';
+    updateProteinLine();
     return;
   }
   const latest = ws[0];
@@ -311,13 +336,14 @@ function renderWeights() {
     return old ? latest.w - old.w : null;
   };
   const fmt = (n) => (n === null ? '—' : (n > 0 ? '+' : '') + n.toFixed(1) + 'kg');
-  const toGoal = latest.w - 64;
+  const goal = getSettings().goal || 64;
+  const toGoal = latest.w - goal;
   stats.innerHTML = `
     <div class="w-big">${latest.w.toFixed(1)}<small> kg</small></div>
     <div class="w-deltas">
       <span>7天：${fmt(delta(7))}</span>
       <span>30天：${fmt(delta(30))}</span>
-      <span>距目标64kg：${toGoal > 0 ? toGoal.toFixed(1) + 'kg' : '已达标 ✓'}</span>
+      <span>距目标${goal}kg：${toGoal > 0 ? toGoal.toFixed(1) + 'kg' : '已达标 ✓'}</span>
     </div>`;
   $('#weight-list').innerHTML = ws
     .map((w, i) => `<li><span>${w.date}</span><b>${w.w.toFixed(1)} kg</b><button class="del" data-i="${i}">✕</button></li>`)
@@ -330,6 +356,7 @@ function renderWeights() {
       renderWeights();
     });
   });
+  updateProteinLine();
 }
 $('#weight-save').addEventListener('click', () => {
   const v = parseFloat($('#weight-input').value);
@@ -339,6 +366,56 @@ $('#weight-save').addEventListener('click', () => {
   setWeights(ws);
   $('#weight-input').value = '';
   renderWeights();
+});
+
+/* ---------- 蛋白质建议 & 个人设置 ---------- */
+function updateProteinLine() {
+  const el = $('#protein-val');
+  if (!el) return;
+  const ws = getWeights();
+  if (!ws.length) { el.textContent = '100~120g/天'; return; }
+  const latest = ws.sort((a, b) => b.date.localeCompare(a.date))[0];
+  el.textContent = `约 ${Math.round(latest.w * 1.6)}g/天`;
+}
+
+function renderSettingsPanel() {
+  const s = getSettings();
+  $('#goal-input').value = s.goal || '';
+  $('#female-toggle').checked = !!s.female;
+  $('#female-panel').hidden = !s.female;
+  renderPhase();
+}
+
+function renderPhase() {
+  const d = cycleDay();
+  $('#phase-line').textContent = d === null
+    ? '点"今天来了"记录一次，App 会按28天周期自动推算阶段'
+    : `周期第 ${d + 1} 天 · ${phaseTip(d)}`;
+}
+
+$('#goal-save').addEventListener('click', () => {
+  const v = parseFloat($('#goal-input').value);
+  if (!v || v < 40 || v > 100) { alert('请输入有效目标体重（40~100kg）'); return; }
+  const s = getSettings();
+  s.goal = Math.round(v * 10) / 10;
+  setSettings(s);
+  renderWeights();
+});
+
+$('#female-toggle').addEventListener('change', (e) => {
+  const s = getSettings();
+  s.female = e.target.checked;
+  setSettings(s);
+  renderSettingsPanel();
+  renderToday();
+});
+
+$('#period-btn').addEventListener('click', () => {
+  const s = getSettings();
+  s.periodStart = key(new Date());
+  setSettings(s);
+  renderPhase();
+  renderToday();
 });
 
 /* 导出 / 导入 */
