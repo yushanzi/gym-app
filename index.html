@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>我的训练</title>
+  <meta name="theme-color" content="#34c759">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="训练">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <!-- 今天 -->
+    <section class="view active" id="view-today">
+      <header class="page-head">
+        <div class="date-line" id="date-line"></div>
+        <h1 id="today-title">今日安排</h1>
+      </header>
+      <div id="today-content"></div>
+      <div class="week-strip" id="week-strip"></div>
+      <button class="btn-checkin" id="checkin-btn">完成今日打卡 ✓</button>
+      <p class="streak-line" id="streak-line"></p>
+    </section>
+
+    <!-- 计划 -->
+    <section class="view" id="view-plan">
+      <header class="page-head"><h1>训练计划</h1></header>
+      <div class="seg" id="plan-seg">
+        <button class="seg-btn active" data-day="A">A 全身</button>
+        <button class="seg-btn" data-day="B">B 核心</button>
+        <button class="seg-btn" data-day="C">C 上肢</button>
+      </div>
+      <div id="plan-detail"></div>
+      <details class="card detail-card">
+        <summary>🦵 膝盖安全准则</summary>
+        <ol class="tips">
+          <li>膝盖出现尖锐痛（&gt;3/10）→ 立即停止该动作；肌肉酸痛正常，关节痛不正常。</li>
+          <li>深蹲幅度以无痛为限，膝盖对准脚尖；前期不做箭步蹲、不跳跃。</li>
+          <li>护膝核心 = 强化臀肌和腘绳肌（硬拉、臀桥、摆动）。</li>
+          <li>旧伤反复疼痛 → 先看运动医学科。</li>
+        </ol>
+      </details>
+      <details class="card detail-card">
+        <summary>🥗 饮食要点</summary>
+        <ul class="tips">
+          <li>热量缺口 300~400 kcal/天，蛋白质 100~120g/天（两餐各 50~60g）。</li>
+          <li>精制主食减量换粗粮；晚饭后不进食。</li>
+          <li>拿铁保持无糖；不喝酒、不喝含糖饮料 ✓。</li>
+        </ul>
+      </details>
+    </section>
+
+    <!-- 计时 -->
+    <section class="view" id="view-timer">
+      <header class="page-head"><h1>组间计时</h1></header>
+      <div class="card timer-wrap">
+        <div class="timer-display" id="timer-display">30</div>
+        <div class="presets" id="presets">
+          <button data-s="30" class="active">30s</button>
+          <button data-s="45">45s</button>
+          <button data-s="60">60s</button>
+          <button data-s="90">90s</button>
+          <button data-s="120">120s</button>
+        </div>
+        <div class="timer-controls">
+          <button class="btn-round" id="timer-minus">−15s</button>
+          <button class="btn-start" id="timer-start">开始</button>
+          <button class="btn-round" id="timer-plus">+15s</button>
+        </div>
+        <div class="timer-foot">
+          <p class="sets-line" id="sets-line">已完成 0 组（点击清零）</p>
+          <button class="btn-ghost" id="timer-reset">复位</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 记录 -->
+    <section class="view" id="view-records">
+      <header class="page-head"><h1>记录</h1></header>
+      <div class="card streak-card" id="streak-card"></div>
+      <div class="card">
+        <h2>打卡日历</h2>
+        <div class="cal-nav">
+          <button id="cal-prev">‹</button>
+          <div id="cal-title"></div>
+          <button id="cal-next">›</button>
+        </div>
+        <div class="cal-dow"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+      <div class="card">
+        <h2>体重记录</h2>
+        <div class="weight-form">
+          <input type="number" inputmode="decimal" step="0.1" id="weight-input" placeholder="66.5">
+          <button id="weight-save">保存</button>
+        </div>
+        <div id="weight-stats"></div>
+        <ul class="weight-list" id="weight-list"></ul>
+        <div class="data-io">
+          <button id="export-btn">导出数据</button>
+          <button id="import-btn">导入数据</button>
+          <input type="file" id="import-file" accept=".json" hidden>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab active" data-tab="today"><span>📋</span>今天</button>
+    <button class="tab" data-tab="plan"><span>📅</span>计划</button>
+    <button class="tab" data-tab="timer"><span>⏱️</span>计时</button>
+    <button class="tab" data-tab="records"><span>📊</span>记录</button>
+  </nav>
+  <script src="app.js"></script>
+</body>
+</html>
