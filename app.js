@@ -201,16 +201,26 @@ function exListHTML(d) {
     .join('');
 }
 
-/* 点动作展开/收起学习卡（事件委托，视频懒加载） */
+/* 点动作展开/收起学习卡（手风琴模式：同一时间只展开一个，视频懒加载） */
 document.addEventListener('click', (ev) => {
   const t = ev.target.closest('.ex-toggle');
   if (!t) return;
-  const guide = t.closest('li').querySelector('.ex-guide');
-  const iframe = guide.querySelector('iframe');
-  if (iframe && !iframe.getAttribute('src')) iframe.setAttribute('src', iframe.dataset.src);
-  guide.hidden = !guide.hidden;
-  if (guide.hidden && iframe) iframe.setAttribute('src', '');
-  t.classList.toggle('open', !guide.hidden);
+  const li = t.closest('li');
+  const guide = li.querySelector('.ex-guide');
+  const willOpen = guide.hidden;
+  // 先收起其他所有已展开的学习卡，并停掉它们的视频
+  li.parentElement.querySelectorAll('.ex-guide:not([hidden])').forEach((g) => {
+    g.hidden = true;
+    const f = g.querySelector('iframe');
+    if (f) f.setAttribute('src', '');
+  });
+  li.parentElement.querySelectorAll('.ex-toggle.open').forEach((x) => x.classList.remove('open'));
+  if (willOpen) {
+    const iframe = guide.querySelector('iframe');
+    if (iframe && !iframe.getAttribute('src')) iframe.setAttribute('src', iframe.dataset.src);
+    guide.hidden = false;
+    t.classList.add('open');
+  }
 });
 
 function renderToday() {
