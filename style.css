@@ -163,3 +163,52 @@ main { max-width: 480px; margin: 0 auto; padding: 0 16px 110px; }
 
 /* 今天页的生理期提示 */
 .phase-banner { background: #fff0f3; color: #b0415b; font-size: 14px; padding: 12px 16px; border-radius: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+
+/* 计时器小工具（今天页） */
+.timer-widget { margin-top: 12px; }
+.timer-widget h2 { font-size: 15px; }
+.timer-widget-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.timer-widget-display { font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.timer-widget-display.running { color: var(--accent); }
+.timer-widget .btn-round { width: 48px; height: 48px; }
+.timer-widget .btn-start { width: 76px; height: 76px; font-size: 17px; }
+.timer-widget .presets { margin: 10px 0 8px; }
+
+/* 饮食管理 */
+.chips-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.chips-row button { border: 1px solid var(--line); background: #fff; border-radius: 18px; padding: 7px 14px; font-size: 14px; color: var(--text); }
+.chips-row button.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.kcal-custom { display: flex; align-items: center; gap: 8px; margin: 4px 0 12px; }
+.kcal-custom input { width: 120px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 15px; background: #f7f7fa; }
+.kcal-unit { color: var(--sub); font-size: 13px; }
+.prot-row { display: flex; align-items: center; gap: 10px; margin: 4px 0 12px; font-size: 14px; }
+.btn-round.sm { width: 36px; height: 36px; font-size: 15px; }
+.prot-row b { font-size: 18px; min-width: 24px; text-align: center; }
+.prot-note { color: var(--sub); font-size: 12px; }
+.btn-save-meal { display: block; width: 100%; padding: 13px; border: none; border-radius: 12px; background: var(--accent); color: #fff; font-size: 16px; font-weight: 700; }
+.anchor-details { margin-top: 12px; }
+.anchor-details summary { font-size: 13px; color: var(--sub); }
+#anchor-list { margin: 8px 0 0; padding: 0; list-style: none; font-size: 13px; }
+#anchor-list li { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--line); }
+#anchor-list li:last-child { border-bottom: none; }
+#anchor-list b { color: var(--sub); font-weight: 600; }
+
+.diet-head, .prot-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.diet-head h2 { margin: 0; }
+.diet-total { font-size: 15px; font-weight: 700; }
+.prot-head { margin-top: 14px; font-size: 13px; color: var(--sub); }
+.diet-sub { font-size: 13px; margin: 8px 0 0; }
+.diet-sub.green { color: var(--accent-deep); }
+.diet-sub.orange { color: #ff9500; }
+.diet-sub.red { color: var(--red); }
+.bar { height: 10px; border-radius: 6px; background: #e9e9ee; overflow: hidden; }
+.bar > div { height: 100%; border-radius: 6px; background: var(--accent); transition: width .3s; }
+.bar.orange > div { background: #ff9500; }
+.bar.red > div { background: var(--red); }
+.bar.prot > div { background: var(--blue); }
+
+.diet-list { list-style: none; margin: 0; padding: 0; }
+.diet-list li { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.diet-list li:last-child { border-bottom: none; }
+.meal-tag { background: var(--accent-soft); color: var(--accent-deep); font-size: 12px; padding: 3px 8px; border-radius: 10px; flex-shrink: 0; }
+.meal-info { flex: 1; color: var(--sub); font-size: 13px; }

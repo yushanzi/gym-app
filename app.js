@@ -151,6 +151,7 @@ document.querySelectorAll('.tab').forEach((t) => {
     document.querySelectorAll('.tab').forEach((x) => x.classList.toggle('active', x === t));
     document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === 'view-' + t.dataset.tab));
     if (t.dataset.tab === 'today') renderToday();
+    if (t.dataset.tab === 'diet') renderDiet();
     if (t.dataset.tab === 'records') renderRecords();
   });
 });
@@ -499,6 +500,8 @@ function updateProteinLine() {
 function renderSettingsPanel() {
   const s = getSettings();
   $('#goal-input').value = s.goal || '';
+  $('#height-input').value = s.height || '';
+  $('#age-input').value = s.age || '';
   $('#female-toggle').checked = !!s.female;
   $('#female-panel').hidden = !s.female;
   renderPhase();
@@ -536,9 +539,120 @@ $('#period-btn').addEventListener('click', () => {
   renderToday();
 });
 
+$('#height-save').addEventListener('click', () => {
+  const v = parseFloat($('#height-input').value);
+  if (!v || v < 130 || v > 220) { alert('请输入有效身高（130~220cm）'); return; }
+  const s = getSettings();
+  s.height = v;
+  setSettings(s);
+  renderDiet();
+});
+
+$('#age-save').addEventListener('click', () => {
+  const v = parseFloat($('#age-input').value);
+  if (!v || v < 15 || v > 90) { alert('请输入有效年龄（15~90岁）'); return; }
+  const s = getSettings();
+  s.age = v;
+  setSettings(s);
+  renderDiet();
+});
+
+/* ---------- 饮食管理 ---------- */
+const getDiet = () => JSON.parse(localStorage.getItem('diet') || '{}');
+const setDiet = (d) => localStorage.setItem('diet', JSON.stringify(d));
+const MEALS = { breakfast: '早餐', lunch: '午餐', dinner: '晚餐', snack: '加餐' };
+const ANCHORS = [
+  ['兰州牛肉面', 550], ['盖浇饭（一荤）', 750], ['蛋炒饭', 650], ['麻辣烫（清汤，人均）', 700],
+  ['麻辣香锅（人均）', 900], ['火锅（人均，含蘸料）', 1200], ['汉堡薯条可乐套餐', 950],
+  ['两荤一素便当', 800], ['水饺 15个', 550], ['肉夹馍 1个', 500], ['小笼包 8个', 450],
+  ['包子 2个', 400], ['寿司 8贯', 400], ['豆浆+油条', 400], ['轻食鸡胸沙拉', 350],
+  ['米饭 1碗', 230], ['炒青菜 1份', 150],
+];
+let mealSel = 'lunch';
+let kcalSel = 600;
+let protVal = 1;
+
+function budgetInfo() {
+  const s = getSettings();
+  const ws = getWeights().sort((a, b) => b.date.localeCompare(a.date));
+  if (!s.height || !s.age || !ws.length) return null;
+  const w = ws[0].w;
+  const bmr = 10 * w + 6.25 * s.height - 5 * s.age + (s.female ? -161 : 5);
+  const budget = Math.round((bmr * 1.35 - 350) / 10) * 10; // 轻度活动 ×1.35 − 350kcal缺口
+  const protein = Math.round(w * 1.6);
+  return { w, budget, protein };
+}
+
+function renderDiet() {
+  const info = budgetInfo();
+  const el = $('#budget-card');
+  const today = getDiet()[key(new Date())] || [];
+  if (!info) {
+    el.innerHTML = '<p class="w-empty">先在"记录 → 个人设置"填好身高、年龄，并记录一次体重，才能计算你的每日预算</p>';
+  } else {
+    const kcal = today.reduce((a, m) => a + m.kcal, 0);
+    const prot = today.reduce((a, m) => a + m.protein, 0) * 25;
+    const pct = Math.min(120, Math.round((kcal / info.budget) * 100));
+    const state = pct < 90 ? 'green' : (pct <= 110 ? 'orange' : 'red');
+    const remain = info.budget - kcal;
+    el.innerHTML = `
+      <div class="diet-head"><h2>今日预算</h2><span class="diet-total">${kcal} / ${info.budget} kcal</span></div>
+      <div class="bar ${state}"><div style="width:${pct}%"></div></div>
+      <p class="diet-sub ${state}">${remain >= 0 ? `还可吃 ${remain} kcal` : `超出 ${-remain} kcal，明天调整`}</p>
+      <div class="prot-head"><span>蛋白质</span><span>${Math.round(prot)} / ${info.protein} g</span></div>
+      <div class="bar prot"><div style="width:${Math.min(100, Math.round((prot / info.protein) * 100))}%"></div></div>`;
+  }
+  $('#diet-list').innerHTML = today.length
+    ? today.map((m, i) => `<li><span class="meal-tag">${MEALS[m.meal] || '正餐'}</span><span class="meal-info">${m.kcal} kcal · 蛋白${m.protein}份（≈${Math.round(m.protein * 25)}g）</span><button class="del" data-i="${i}">✕</button></li>`).join('')
+    : '<p class="w-empty">今天还没记录，记下你的第一餐吧</p>';
+  document.querySelectorAll('#diet-list .del').forEach((b) => {
+    b.addEventListener('click', () => {
+      const diet = getDiet();
+      const k = key(new Date());
+      diet[k].splice(+b.dataset.i, 1);
+      setDiet(diet);
+      renderDiet();
+    });
+  });
+}
+
+$('#anchor-list').innerHTML = ANCHORS.map(([n, k]) => `<li><span>${n}</span><b>约 ${k} kcal</b></li>`).join('');
+
+document.querySelectorAll('#meal-chips button').forEach((b) => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#meal-chips button').forEach((x) => x.classList.toggle('active', x === b));
+    mealSel = b.dataset.meal;
+  });
+});
+document.querySelectorAll('#kcal-chips button').forEach((b) => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#kcal-chips button').forEach((x) => x.classList.toggle('active', x === b));
+    kcalSel = +b.dataset.k;
+    $('#kcal-input').value = '';
+  });
+});
+$('#kcal-input').addEventListener('input', (e) => {
+  const v = parseFloat(e.target.value);
+  if (v) {
+    kcalSel = v;
+    document.querySelectorAll('#kcal-chips button').forEach((x) => x.classList.remove('active'));
+  }
+});
+$('#prot-minus').addEventListener('click', () => { protVal = Math.max(0.5, protVal - 0.5); $('#prot-val').textContent = protVal; });
+$('#prot-plus').addEventListener('click', () => { protVal = Math.min(12, protVal + 0.5); $('#prot-val').textContent = protVal; });
+$('#meal-save').addEventListener('click', () => {
+  if (!kcalSel || kcalSel < 50 || kcalSel > 5000) { alert('请选择或输入有效热量（50~5000 kcal）'); return; }
+  const diet = getDiet();
+  const k = key(new Date());
+  diet[k] = diet[k] || [];
+  diet[k].push({ meal: mealSel, kcal: Math.round(kcalSel), protein: protVal, t: Date.now() });
+  setDiet(diet);
+  renderDiet();
+});
+
 /* 导出 / 导入 */
 $('#export-btn').addEventListener('click', () => {
-  const data = JSON.stringify({ checkins: getCheckins(), weights: getWeights(), exportedAt: new Date().toISOString() }, null, 2);
+  const data = JSON.stringify({ checkins: getCheckins(), weights: getWeights(), diet: getDiet(), settings: getSettings(), exportedAt: new Date().toISOString() }, null, 2);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
   a.download = '训练数据.json';
@@ -554,7 +668,10 @@ $('#import-file').addEventListener('change', (e) => {
       const d = JSON.parse(r.result);
       if (d.checkins) setCheckins(Object.assign(getCheckins(), d.checkins));
       if (d.weights) setWeights(d.weights);
+      if (d.diet) setDiet(Object.assign(getDiet(), d.diet));
+      if (d.settings) setSettings(Object.assign(getSettings(), d.settings));
       renderRecords();
+      renderDiet();
     } catch (err) { alert('导入失败：文件格式不正确'); }
   };
   r.readAsText(f);
@@ -565,6 +682,7 @@ $('#import-file').addEventListener('change', (e) => {
 renderToday();
 renderPlan();
 renderTimer();
+renderDiet();
 renderRecords();
 
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
