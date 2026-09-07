@@ -86,12 +86,6 @@
       <div class="card" id="budget-card"></div>
       <div class="card">
         <h2>记一餐</h2>
-        <div class="photo-row">
-          <input type="file" id="photo-input" accept="image/*" capture="environment" hidden>
-          <button class="btn-photo" id="photo-btn">📷 拍照识卡</button>
-          <span class="photo-status" id="photo-status">拍下食物，AI 自动估算热量</span>
-        </div>
-        <img id="photo-preview" alt="食物照片">
         <div class="chips-row" id="meal-chips">
           <button data-meal="breakfast">早餐</button>
           <button data-meal="lunch" class="active">午餐</button>
@@ -154,13 +148,6 @@
           <div class="goal-form">
             <input type="number" inputmode="numeric" step="1" id="age-input" placeholder="40">
             <button id="age-save">保存</button>
-          </div>
-        </div>
-        <div class="setting-row ai-row">
-          <span>AI识卡接口</span>
-          <div class="goal-form">
-            <input type="text" id="ai-url-input" placeholder="https://xxx.workers.dev">
-            <button id="ai-url-save">保存</button>
           </div>
         </div>
         <div class="setting-row">

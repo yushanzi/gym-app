@@ -1,5 +1,5 @@
 /* Service Worker：离线缓存（改版时把 VERSION 加一） */
-const VERSION = 'gym-v9';
+const VERSION = 'gym-v8';
 const ASSETS = [
   './',
   './index.html',
