@@ -502,6 +502,7 @@ function renderSettingsPanel() {
   $('#goal-input').value = s.goal || '';
   $('#height-input').value = s.height || '';
   $('#age-input').value = s.age || '';
+  $('#ai-url-input').value = s.aiUrl || '';
   $('#female-toggle').checked = !!s.female;
   $('#female-panel').hidden = !s.female;
   renderPhase();
@@ -555,6 +556,70 @@ $('#age-save').addEventListener('click', () => {
   s.age = v;
   setSettings(s);
   renderDiet();
+});
+
+$('#ai-url-save').addEventListener('click', () => {
+  const v = $('#ai-url-input').value.trim();
+  if (!v || !/^https?:\/\//.test(v)) { alert('请输入以 http(s):// 开头的接口地址'); return; }
+  const s = getSettings();
+  s.aiUrl = v;
+  setSettings(s);
+});
+
+/* ---------- 拍照识卡 ---------- */
+function compressImage(file, maxSide, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('图片读取失败')); };
+    img.src = url;
+  });
+}
+
+async function handlePhoto(file) {
+  $('#photo-status').textContent = '处理中…';
+  let dataUrl;
+  try { dataUrl = await compressImage(file, 640, 0.7); } catch { $('#photo-status').textContent = '图片处理失败，请手动选择热量'; return; }
+  const pv = $('#photo-preview');
+  pv.src = dataUrl;
+  pv.classList.add('show');
+  const url = getSettings().aiUrl;
+  if (!url) { $('#photo-status').textContent = '已拍照。配置 AI 识卡接口后即可自动估算（记录→个人设置）'; return; }
+  $('#photo-status').textContent = 'AI 估算中…';
+  try {
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: dataUrl }) });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+    if (d.kcal > 0) {
+      kcalSel = Math.round(d.kcal / 50) * 50;
+      $('#kcal-input').value = kcalSel;
+      document.querySelectorAll('#kcal-chips button').forEach((x) => x.classList.remove('active'));
+      if (d.protein > 0) {
+        protVal = Math.min(12, Math.max(0.5, Math.round((d.protein / 25) * 2) / 2));
+        $('#prot-val').textContent = protVal;
+      }
+      $('#photo-status').textContent = `识别：${d.name || '这餐'} · 约 ${kcalSel} kcal · 蛋白约${d.protein || '—'}g（可自行修改后保存）`;
+    } else {
+      $('#photo-status').textContent = (d.note || 'AI 未能识别，请手动选择热量');
+    }
+  } catch {
+    $('#photo-status').textContent = 'AI 接口调用失败，请手动选择热量';
+  }
+}
+$('#photo-btn').addEventListener('click', () => $('#photo-input').click());
+$('#photo-input').addEventListener('change', (e) => {
+  const f = e.target.files[0];
+  if (f) handlePhoto(f);
+  e.target.value = '';
 });
 
 /* ---------- 饮食管理 ---------- */
